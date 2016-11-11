@@ -318,8 +318,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                 // Simulate network access.
 
                 FTPClient aFtp = new FTPClient();
-                aFtp.connect(InetAddress.getByName("ftp.buradd.com"));
-                aFtp.login("buraddco", "rank1up3");
+
+
                 aFtp.enterLocalPassiveMode();
                 aFtp.changeWorkingDirectory("/bcloud");
                 FTPFile[] files = aFtp.listFiles();
