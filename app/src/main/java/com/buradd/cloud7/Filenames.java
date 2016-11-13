@@ -3,6 +3,7 @@ package com.buradd.cloud7;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
@@ -13,7 +14,18 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import com.buradd.cloud7.net.ConnectionParams;
+import com.buradd.cloud7.net.FTPSingleFileTransferTask;
+import com.buradd.cloud7.net.Transfer;
+import com.buradd.cloud7.net.TransferDirection;
+import com.buradd.cloud7.net.TransferTask;
+import com.buradd.cloud7.net.TransferTaskProgressListener;
+
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 
 
 /**
@@ -24,19 +36,21 @@ import java.util.ArrayList;
  * Use the {@link Filenames#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class Filenames extends Fragment {
+public class Filenames extends Fragment implements TransferTaskProgressListener {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
     public static ArrayList<String> fileList = new ArrayList<>();
-
+    private Transfer FileTransfer;
 
     private ListView theListView;
 
     // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    private String mUser;
+    private String mPass;
+
+    private MainActivity mainActivity = MainActivity.getInstance();
 
     private OnFragmentInteractionListener mListener;
 
@@ -45,6 +59,8 @@ public class Filenames extends Fragment {
     }
 
     private static final String ARG_SECTION_NUMBER = "section_number";
+    private static final String ARG_USER_NAME = "user_name";
+    private static final String ARG_USER_PASS = "user_pass";
 
     /**
      * Use this factory method to create a new instance of
@@ -53,10 +69,11 @@ public class Filenames extends Fragment {
      * @return A new instance of fragment Filenames.
      */
     // TODO: Rename and change types and number of parameters
-    public static Filenames newInstance(int sectionNumber) {
+    public static Filenames newInstance(String aUser, String aPass) {
         Filenames fragment = new Filenames();
         Bundle args = new Bundle();
-        args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+        args.putString(ARG_USER_NAME, aUser);
+        args.putString(ARG_USER_PASS, aPass);
         fragment.setArguments(args);
         return fragment;
     }
@@ -71,10 +88,26 @@ public class Filenames extends Fragment {
         theListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Snackbar.make(view, "This is " + theListView.getAdapter().getItem(i).toString(), Snackbar.LENGTH_LONG).show();
+                Snackbar.make(view, "Starting download: " + theListView.getAdapter().getItem(i).toString(), Snackbar.LENGTH_LONG).show();
+                final File file = new File(theListView.getAdapter().getItem(i).toString());
+                FileTransfer = new Transfer(1);
+                FileTransfer.setDestinationPath(Environment.getExternalStorageDirectory() + "/Cloud7");
+                FileTransfer.setName(file.getName());
+                FileTransfer.setSourcePath("/bcloud");
+                FileTransfer.setDirection(TransferDirection.DOWNLOAD);
+                TransferTask downLoad = new FTPSingleFileTransferTask(mainActivity, Filenames.this, Collections.singletonList(FileTransfer), getConnectionParams());
+                downLoad.execute();
             }
         });
 
+    }
+
+    public ConnectionParams getConnectionParams(){
+        final ConnectionParams connectionParams = new ConnectionParams();
+        connectionParams.host = "ftp.buradd.com";
+        connectionParams.username = mUser;
+        connectionParams.password = mPass;
+        return connectionParams;
     }
 
     @Override
@@ -87,8 +120,8 @@ public class Filenames extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+            mUser = getArguments().getString(ARG_USER_NAME);
+            mPass = getArguments().getString(ARG_USER_PASS);
         }
 
 
@@ -124,6 +157,31 @@ public class Filenames extends Fragment {
     public void onDetach() {
         super.onDetach();
         mListener = null;
+    }
+
+    @Override
+    public void onBeginTransferTask(TransferTask task) {
+
+    }
+
+    @Override
+    public void onBeginTransfer(TransferTask task, int transferId) {
+        mainActivity.setProgressBarIndeterminateVisibility(true);
+    }
+
+    @Override
+    public void onProgressUpdate(TransferTask task, int transferId, int aProgress) {
+        mainActivity.setProgress(aProgress);
+    }
+
+    @Override
+    public void onEndTransfer(TransferTask task, int transferId) {
+        mainActivity.setProgressBarIndeterminateVisibility(false);
+    }
+
+    @Override
+    public void onTransferFailed(TransferTask task, int transferId, Exception aException) {
+
     }
 
     /**

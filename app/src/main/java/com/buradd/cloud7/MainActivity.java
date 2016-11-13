@@ -1,5 +1,6 @@
 package com.buradd.cloud7;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.support.design.widget.TabLayout;
@@ -14,6 +15,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -22,8 +24,21 @@ import android.view.ViewGroup;
 
 import android.widget.TextView;
 
+import com.buradd.cloud7.net.ConnectionParams;
+
 public class MainActivity extends AppCompatActivity implements Filenames.OnFragmentInteractionListener {
 
+    public static String LOGIN_USER_NAME = "com.buradd.cloud7.LOGIN_USER_NAME";
+    public static String LOGIN_USER_PASS = "com.buradd.cloud7.LOGIN_USER_PASS";
+    ProgressDialog mDownloadProgress;
+    private String mUser;
+    private String mPass;
+
+    private static MainActivity _instance = null;
+
+    public static MainActivity getInstance(){
+        return _instance;
+    }
 
     @Override
     protected void onDestroy() {
@@ -49,8 +64,12 @@ public class MainActivity extends AppCompatActivity implements Filenames.OnFragm
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
 
+        mUser = getIntent().getStringExtra(LOGIN_USER_NAME);
+        mPass = getIntent().getStringExtra(LOGIN_USER_PASS);
+        _instance = this;
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         // Create the adapter that will return a fragment for each of the three
@@ -104,6 +123,8 @@ public class MainActivity extends AppCompatActivity implements Filenames.OnFragm
 
     }
 
+
+
     /**
      * A placeholder fragment containing a simple view.
      */
@@ -155,7 +176,7 @@ public class MainActivity extends AppCompatActivity implements Filenames.OnFragm
             // Return a PlaceholderFragment (defined as a static inner class below).
             switch(position){
                 case 0:
-                    return Filenames.newInstance(position);
+                    return Filenames.newInstance(mUser, mPass);
                 case 1:
                     return PlaceholderFragment.newInstance(position + 1);
                 case 2:
@@ -175,13 +196,62 @@ public class MainActivity extends AppCompatActivity implements Filenames.OnFragm
         public CharSequence getPageTitle(int position) {
             switch (position) {
                 case 0:
-                    return "FILENAMES";
+                    return "IMAGES";
                 case 1:
-                    return "SECTION 2";
+                    return "VIDEOS";
                 case 2:
-                    return "SECTION 3";
+                    return "DOCUMENTS";
             }
             return null;
         }
+    }
+
+    public void showDownloadProgressDialog()
+    {
+        if(mDownloadProgress == null)
+        {
+            mDownloadProgress = new ProgressDialog(this);
+            mDownloadProgress.setCancelable(false);
+            mDownloadProgress.setIndeterminate(false);
+            mDownloadProgress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+            mDownloadProgress.setMessage("");
+            mDownloadProgress.getWindow().setGravity(Gravity.BOTTOM);
+            mDownloadProgress.setMax(100);
+            mDownloadProgress.setProgress(0);
+        }
+        if(!mDownloadProgress.isShowing()) {
+            mDownloadProgress.show();
+        }
+    }
+
+    /**
+     * hideDownloadProgressDialog
+     *
+     * hide the download progress dialog
+     */
+    public void hideDownloadProgressDialog()
+    {
+        if(mDownloadProgress != null)
+        {
+            mDownloadProgress.dismiss();
+        }
+        mDownloadProgress = null;
+    }
+
+    /**
+     * updateDownloadProgress
+     *
+     * change the progress Dialog status meg
+     *
+     * @param msg
+     */
+    public void updateDownloadProgress(final String msg, final int progress)
+    {
+        if(mDownloadProgress == null || !mDownloadProgress.isShowing())
+        {
+            return;
+        }
+        mDownloadProgress.setMessage(msg);
+        mDownloadProgress.setProgress(progress);
     }
 }

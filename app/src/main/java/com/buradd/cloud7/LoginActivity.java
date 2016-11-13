@@ -1,12 +1,15 @@
 package com.buradd.cloud7;
 
+import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.app.LoaderManager.LoaderCallbacks;
 
@@ -30,9 +33,11 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 
+import java.io.File;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
@@ -67,12 +72,14 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     private EditText mPasswordView;
     private View mProgressView;
     private View mLoginFormView;
+    String[] PERMISSIONS = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.INTERNET, Manifest.permission.BLUETOOTH, Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.READ_PHONE_STATE, Manifest.permission.ACCESS_NETWORK_STATE, Manifest.permission.WAKE_LOCK, Manifest.permission.RECORD_AUDIO, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         // Set up the login form.
+        ActivityCompat.requestPermissions(this, PERMISSIONS, 1);
         mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
         populateAutoComplete();
 
@@ -198,7 +205,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
     private boolean isEmailValid(String email) {
         //TODO: Replace this with your own logic
-        return email.contains("@");
+        return true;
     }
 
     private boolean isPasswordValid(String password) {
@@ -313,40 +320,38 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         @Override
         protected Boolean doInBackground(Void... params) {
             // TODO: attempt authentication against a network service.
-
+            boolean connected;
             try {
                 // Simulate network access.
-
                 FTPClient aFtp = new FTPClient();
-
-
-                aFtp.enterLocalPassiveMode();
-                aFtp.changeWorkingDirectory("/bcloud");
-                FTPFile[] files = aFtp.listFiles();
-
-                for(FTPFile file : files){
-                    String currFile = file.getName();
-                    Filenames.fileList.add(currFile);
+                aFtp.connect(InetAddress.getByName("ftp.buradd.com"));
+                connected = aFtp.login(mEmail, mPassword);
+                if(connected) {
+                    aFtp.enterLocalPassiveMode();
+                    aFtp.setFileType(FTP.BINARY_FILE_TYPE);
+                    aFtp.changeWorkingDirectory("/bcloud");
+                    FTPFile[] files = aFtp.listFiles();
+                    for (FTPFile file : files) {
+                        String currFile = file.getName();
+                        Filenames.fileList.add(currFile);
+                    }
                 }
                 aFtp.logout();
                 aFtp.disconnect();
+                File mainFolder = new File(Environment.getExternalStorageDirectory() + "/Cloud7");
+                if(!mainFolder.exists()){
+                    mainFolder.mkdirs();
+                }
 
-                Thread.sleep(2000);
             } catch (Exception e) {
                 e.printStackTrace();
                 return false;
             }
 
-            for (String credential : DUMMY_CREDENTIALS) {
-                String[] pieces = credential.split(":");
-                if (pieces[0].equals(mEmail)) {
-                    // Account exists, return true if the password matches.
-                    return pieces[1].equals(mPassword);
-                }
-            }
+            return connected;
 
             // TODO: register the new account here.
-            return true;
+
         }
 
         @Override
@@ -356,6 +361,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
             if (success) {
                 Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                intent.putExtra(MainActivity.LOGIN_USER_NAME, mEmail);
+                intent.putExtra(MainActivity.LOGIN_USER_PASS, mPassword);
                 startActivity(intent);
                 finish();
             } else {
