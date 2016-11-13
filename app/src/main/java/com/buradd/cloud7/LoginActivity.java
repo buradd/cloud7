@@ -329,11 +329,23 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                 if(connected) {
                     aFtp.enterLocalPassiveMode();
                     aFtp.setFileType(FTP.BINARY_FILE_TYPE);
-                    aFtp.changeWorkingDirectory("/bcloud");
-                    FTPFile[] files = aFtp.listFiles();
-                    for (FTPFile file : files) {
+                    aFtp.changeWorkingDirectory("/public_html/cloud7/files");
+                    FTPFile[] filesList = aFtp.listFiles();
+                    for (FTPFile file : filesList) {
                         String currFile = file.getName();
                         Filenames.fileList.add(currFile);
+                    }
+                    aFtp.changeWorkingDirectory("/public_html/cloud7/images/");
+                    FTPFile[] imagesList = aFtp.listFiles();
+                    for (FTPFile file : imagesList) {
+                        String currFile = file.getName();
+                        Filenames.imageList.add(currFile);
+                    }
+                    aFtp.changeWorkingDirectory("/public_html/cloud7/videos/");
+                    FTPFile[] videoList = aFtp.listFiles();
+                    for (FTPFile file : videoList) {
+                        String currFile = file.getName();
+                        Filenames.videoList.add(currFile);
                     }
                 }
                 aFtp.logout();

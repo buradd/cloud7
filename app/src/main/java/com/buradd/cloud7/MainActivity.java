@@ -176,13 +176,13 @@ public class MainActivity extends AppCompatActivity implements Filenames.OnFragm
             // Return a PlaceholderFragment (defined as a static inner class below).
             switch(position){
                 case 0:
-                    return Filenames.newInstance(mUser, mPass);
+                    return Filenames.newInstance(mUser, mPass, 0);
                 case 1:
-                    return PlaceholderFragment.newInstance(position + 1);
+                    return Filenames.newInstance(mUser, mPass, 1);
                 case 2:
-                    return PlaceholderFragment.newInstance(position + 1);
+                    return Filenames.newInstance(mUser, mPass, 2);
             }
-            return PlaceholderFragment.newInstance(position + 1);
+         return null;
 
         }
 
@@ -196,11 +196,11 @@ public class MainActivity extends AppCompatActivity implements Filenames.OnFragm
         public CharSequence getPageTitle(int position) {
             switch (position) {
                 case 0:
-                    return "IMAGES";
+                    return "FILES";
                 case 1:
-                    return "VIDEOS";
+                    return "IMAGES";
                 case 2:
-                    return "DOCUMENTS";
+                    return "VIDEOS";
             }
             return null;
         }

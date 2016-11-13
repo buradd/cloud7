@@ -1,12 +1,19 @@
 package com.buradd.cloud7.net;
 
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Environment;
+import android.support.design.widget.Snackbar;
 import android.util.Log;
+import android.view.View;
+import android.webkit.MimeTypeMap;
 
 
 import com.buradd.cloud7.MainActivity;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -93,7 +100,7 @@ public abstract class TransferTask
         int transferId = codes[0];
         int progress = codes[1];
         String filename = values[0].filename;
-        MainActivity mainActivity = MainActivity.getInstance();
+        final MainActivity mainActivity = MainActivity.getInstance();
 
         if(filename != null && !filename.isEmpty()) {
             //filename may end in '/'
@@ -133,6 +140,23 @@ public abstract class TransferTask
                 if(mainActivity != null)
                 {
                     mainActivity.hideDownloadProgressDialog();
+                    final String file = filename;
+                    Snackbar.make(mainActivity.findViewById(android.R.id.content), "Download complete:\n" + filename, Snackbar.LENGTH_LONG).setAction("OPEN", new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+
+
+                            Intent newIntent = new Intent(Intent.ACTION_VIEW);
+                            String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(getFilename(file).substring(getFilename(file).lastIndexOf(".")+1));
+                            newIntent.setDataAndType(Uri.fromFile(new File(getFilename(file))), mimeType);
+                         //   newIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            try {
+                                mainActivity.startActivity(newIntent);
+                            } catch (Exception e) {
+                                //Toast.makeText(context, "No handler for this type of file.", Toast.LENGTH_LONG).show();
+                            }
+                        }
+                    }).show();
                 }
                 break;
             default:
@@ -147,6 +171,10 @@ public abstract class TransferTask
                 }
 
         }
+    }
+
+    private String getFilename(String aFile){
+        return Environment.getExternalStorageDirectory() + "/Cloud7/" + aFile;
     }
 
     protected abstract void doInBackgroundDownload() throws IOException;

@@ -42,7 +42,11 @@ public class Filenames extends Fragment implements TransferTaskProgressListener 
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
     public static ArrayList<String> fileList = new ArrayList<>();
+    public static ArrayList<String> imageList = new ArrayList<>();
+    public static ArrayList<String> videoList = new ArrayList<>();
     private Transfer FileTransfer;
+
+    private int mFragmentType;
 
     private ListView theListView;
 
@@ -58,9 +62,10 @@ public class Filenames extends Fragment implements TransferTaskProgressListener 
         // Required empty public constructor
     }
 
-    private static final String ARG_SECTION_NUMBER = "section_number";
     private static final String ARG_USER_NAME = "user_name";
     private static final String ARG_USER_PASS = "user_pass";
+    private static final String ARG_FRAGMENT_TYPE = "fragment_type";
+
 
     /**
      * Use this factory method to create a new instance of
@@ -69,11 +74,12 @@ public class Filenames extends Fragment implements TransferTaskProgressListener 
      * @return A new instance of fragment Filenames.
      */
     // TODO: Rename and change types and number of parameters
-    public static Filenames newInstance(String aUser, String aPass) {
+    public static Filenames newInstance(String aUser, String aPass, int aType) {
         Filenames fragment = new Filenames();
         Bundle args = new Bundle();
         args.putString(ARG_USER_NAME, aUser);
         args.putString(ARG_USER_PASS, aPass);
+        args.putInt(ARG_FRAGMENT_TYPE, aType);
         fragment.setArguments(args);
         return fragment;
     }
@@ -82,9 +88,23 @@ public class Filenames extends Fragment implements TransferTaskProgressListener 
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         theListView = (ListView) view.findViewById(R.id.lvList);
-        final ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(),
+        final ArrayAdapter<String> adapterfiles = new ArrayAdapter<String>(getActivity(),
                 android.R.layout.simple_list_item_1, fileList);
-        theListView.setAdapter(adapter);
+        final ArrayAdapter<String> adapterimages = new ArrayAdapter<String>(getActivity(),
+                android.R.layout.simple_list_item_1, imageList);
+        final ArrayAdapter<String> adaptervideos = new ArrayAdapter<String>(getActivity(),
+                android.R.layout.simple_list_item_1, videoList);
+        switch(mFragmentType){
+            case 0:
+                theListView.setAdapter(adapterfiles);
+                break;
+            case 1:
+                theListView.setAdapter(adapterimages);
+                break;
+            case 2:
+                theListView.setAdapter(adaptervideos);
+                break;
+        }
         theListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
@@ -93,7 +113,17 @@ public class Filenames extends Fragment implements TransferTaskProgressListener 
                 FileTransfer = new Transfer(1);
                 FileTransfer.setDestinationPath(Environment.getExternalStorageDirectory() + "/Cloud7");
                 FileTransfer.setName(file.getName());
-                FileTransfer.setSourcePath("/bcloud");
+                switch(mFragmentType){
+                    case 0:
+                        FileTransfer.setSourcePath("/public_html/cloud7/files");
+                        break;
+                    case 1:
+                        FileTransfer.setSourcePath("/public_html/cloud7/images");
+                        break;
+                    case 2:
+                        FileTransfer.setSourcePath("/public_html/cloud7/videos");
+                        break;
+                }
                 FileTransfer.setDirection(TransferDirection.DOWNLOAD);
                 TransferTask downLoad = new FTPSingleFileTransferTask(mainActivity, Filenames.this, Collections.singletonList(FileTransfer), getConnectionParams());
                 downLoad.execute();
@@ -113,6 +143,8 @@ public class Filenames extends Fragment implements TransferTaskProgressListener 
     @Override
     public void onDestroy() {
         fileList.clear();
+        imageList.clear();
+        videoList.clear();
         super.onDestroy();
     }
 
@@ -122,6 +154,7 @@ public class Filenames extends Fragment implements TransferTaskProgressListener 
         if (getArguments() != null) {
             mUser = getArguments().getString(ARG_USER_NAME);
             mPass = getArguments().getString(ARG_USER_PASS);
+            mFragmentType = getArguments().getInt(ARG_FRAGMENT_TYPE);
         }
 
 
