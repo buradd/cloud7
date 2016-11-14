@@ -3,6 +3,7 @@ package com.buradd.cloud7;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Environment;
 import android.support.design.widget.TabLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -25,14 +26,23 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.buradd.cloud7.net.ConnectionParams;
+import com.buradd.cloud7.net.FTPSingleFileTransferTask;
+import com.buradd.cloud7.net.Transfer;
+import com.buradd.cloud7.net.TransferDirection;
+import com.buradd.cloud7.net.TransferTask;
+import com.buradd.cloud7.net.TransferTaskProgressListener;
 
-public class MainActivity extends AppCompatActivity implements Filenames.OnFragmentInteractionListener {
+import java.io.File;
+import java.util.Collections;
+
+public class MainActivity extends AppCompatActivity implements Filenames.OnFragmentInteractionListener, TransferTaskProgressListener {
 
     public static String LOGIN_USER_NAME = "com.buradd.cloud7.LOGIN_USER_NAME";
     public static String LOGIN_USER_PASS = "com.buradd.cloud7.LOGIN_USER_PASS";
     ProgressDialog mDownloadProgress;
     private String mUser;
     private String mPass;
+    public Transfer FileTransfer;
 
     private static MainActivity _instance = null;
 
@@ -88,11 +98,38 @@ public class MainActivity extends AppCompatActivity implements Filenames.OnFragm
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+               final View theView = view;
+
+                SimpleFileDialog sfd = new SimpleFileDialog(MainActivity.this, "FileOpen..", new SimpleFileDialog.SimpleFileDialogListener() {
+                    @Override
+                    public void onChosenDir(String chosenDir) {
+                        final File file = new File(chosenDir);
+                        FileTransfer = new Transfer(1);
+                        FileTransfer.setSourcePath(getSourcePath());
+                        FileTransfer.setDestinationPath("/public_html/cloud7/files");
+                        FileTransfer.setName(file.getName());
+                        FileTransfer.setDirection(TransferDirection.UPLOAD);
+                        TransferTask upLoad = new FTPSingleFileTransferTask(MainActivity.this, MainActivity.this, Collections.singletonList(FileTransfer), getConnectionParams());
+                        upLoad.execute();
+
+                    }
+                });
+                sfd.default_file_name = "";
+                sfd.chooseFile_or_Dir();
             }
         });
 
+    }
+
+    private String getSourcePath() {
+        return Environment.getExternalStorageDirectory() + "/Cloud7";
+    }
+    public ConnectionParams getConnectionParams(){
+        final ConnectionParams connectionParams = new ConnectionParams();
+        connectionParams.host = "ftp.buradd.com";
+        connectionParams.username = mUser;
+        connectionParams.password = mPass;
+        return connectionParams;
     }
 
 
@@ -123,42 +160,32 @@ public class MainActivity extends AppCompatActivity implements Filenames.OnFragm
 
     }
 
+    @Override
+    public void onBeginTransferTask(TransferTask task) {
 
-
-    /**
-     * A placeholder fragment containing a simple view.
-     */
-    public static class PlaceholderFragment extends Fragment {
-        /**
-         * The fragment argument representing the section number for this
-         * fragment.
-         */
-        private static final String ARG_SECTION_NUMBER = "section_number";
-
-        public PlaceholderFragment() {
-        }
-
-        /**
-         * Returns a new instance of this fragment for the given section
-         * number.
-         */
-        public static PlaceholderFragment newInstance(int sectionNumber) {
-            PlaceholderFragment fragment = new PlaceholderFragment();
-            Bundle args = new Bundle();
-            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
-            fragment.setArguments(args);
-            return fragment;
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-            TextView textView = (TextView) rootView.findViewById(R.id.section_label);
-            textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_SECTION_NUMBER)));
-            return rootView;
-        }
     }
+
+    @Override
+    public void onBeginTransfer(TransferTask task, int transferId) {
+        setProgressBarIndeterminateVisibility(true);
+    }
+
+    @Override
+    public void onProgressUpdate(TransferTask task, int transferId, int aProgress) {
+        setProgress(aProgress);
+    }
+
+    @Override
+    public void onEndTransfer(TransferTask task, int transferId) {
+        setProgressBarIndeterminateVisibility(false);
+    }
+
+    @Override
+    public void onTransferFailed(TransferTask task, int transferId, Exception aException) {
+
+    }
+
+
 
     /**
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to

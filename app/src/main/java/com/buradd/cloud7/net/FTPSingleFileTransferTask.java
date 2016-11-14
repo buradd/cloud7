@@ -1,8 +1,15 @@
 package com.buradd.cloud7.net;
 
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
+import android.webkit.MimeTypeMap;
+
+import com.buradd.cloud7.Files;
+import com.buradd.cloud7.MainActivity;
 
 import org.apache.commons.io.input.CountingInputStream;
 import org.apache.commons.io.output.CountingOutputStream;
@@ -14,6 +21,7 @@ import org.apache.commons.net.ftp.FTPReply;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -96,9 +104,18 @@ public class FTPSingleFileTransferTask
 
             fileModified = modificationTime == null ||
                     (!TextUtils.isEmpty(modificationTime) &&
-                            !modificationTime.equals(mCurrentTransfer.getLastModified()));
+                            !modificationTime.equals(Files.getLastModified(mCurrentTransfer.getFullSourcePath(), mContext)));
             if(!fileModified){
                 Log.v("dt.ftp", mCurrentTransfer.getName() + " is not modified since last download time");
+                Intent newIntent = new Intent(Intent.ACTION_VIEW);
+                String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(mCurrentTransfer.getFullDestinationPath().substring(mCurrentTransfer.getFullDestinationPath().lastIndexOf(".")+1));
+                newIntent.setDataAndType(Uri.fromFile(new File(mCurrentTransfer.getFullDestinationPath())), mimeType);
+                //   newIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                try {
+                    MainActivity.getInstance().startActivity(newIntent);
+                } catch (Exception e) {
+                    //Toast.makeText(context, "No handler for this type of file.", Toast.LENGTH_LONG).show();
+                }
             }
             else{
                 mCurrentTransfer.setLastModified(modificationTime);
@@ -122,6 +139,7 @@ public class FTPSingleFileTransferTask
                 // Download file
                 mFTPClient.retrieveFile(mCurrentTransfer.getFullSourcePath(), cos);
                 // Close local file
+                Files.setLastModified(mCurrentTransfer.getFullSourcePath(), modificationTime, mContext);
                 fos.close();
             }
 
@@ -150,19 +168,22 @@ public class FTPSingleFileTransferTask
                 connect();
             }
             mFTPClient.setFileType(FTP.BINARY_FILE_TYPE);
-            FTPFile file = mFTPClient.mlistFile(mCurrentTransfer.getName());
-            mCurrentTransfer.setFileSize(file.getSize());
-
+            File file = new File(mCurrentTransfer.getFullSourcePath());
+            mCurrentTransfer.setFileSize(file.length());
             // Open local file
             InputStream fis = new BufferedInputStream(new FileInputStream(mCurrentTransfer.getFullSourcePath()));
             CountingInputStream cis = new CountingInputStream(fis){
+                private int prevoiusProgress = 0;
 
                 protected void afterRead(int n){
                     super.afterRead(n);
-
                     int progress = Math.round((getCount() * 100) / mCurrentTransfer.getFileSize());
-                    mCurrentTransfer.setProgress(progress);
-                    publishProgress(new ProgressDescription(mCurrentTransfer.getDestinationPath(), mCurrentTransfer.getId(), progress));
+                    if(progress != prevoiusProgress){
+                        prevoiusProgress = progress;
+                        mCurrentTransfer.setProgress(progress);
+                        publishProgress(new ProgressDescription(mCurrentTransfer.getName(), mCurrentTransfer.getId(), progress));
+                    }
+
                 }
             };
             // Go to directory
@@ -174,7 +195,7 @@ public class FTPSingleFileTransferTask
             // Close local file
             fis.close();
             // End of transfer
-            publishProgress(new ProgressDescription(mCurrentTransfer.getDestinationPath(), mCurrentTransfer.getId(), 101));
+            publishProgress(new ProgressDescription(mCurrentTransfer.getName(), mCurrentTransfer.getId(), 101));
         } catch(IOException e){
             publishProgress(new ProgressDescription(destPath, e, mCurrentTransfer.getId(), -1));
             e.printStackTrace();

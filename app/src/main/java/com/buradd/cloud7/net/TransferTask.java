@@ -141,7 +141,7 @@ public abstract class TransferTask
                 {
                     mainActivity.hideDownloadProgressDialog();
                     final String file = filename;
-                    Snackbar.make(mainActivity.findViewById(android.R.id.content), "Download complete:\n" + filename, Snackbar.LENGTH_LONG).setAction("OPEN", new View.OnClickListener() {
+                    Snackbar.make(mainActivity.findViewById(android.R.id.content), "Transfer complete:\n" + filename, Snackbar.LENGTH_LONG).setAction("OPEN", new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
 
