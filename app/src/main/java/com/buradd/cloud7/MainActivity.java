@@ -33,6 +33,8 @@ import com.buradd.cloud7.net.Transfer;
 import com.buradd.cloud7.net.TransferDirection;
 import com.buradd.cloud7.net.TransferTask;
 import com.buradd.cloud7.net.TransferTaskProgressListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
 
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
@@ -54,6 +56,7 @@ public class MainActivity extends AppCompatActivity implements Filenames.OnFragm
     private String mUser;
     private String mPass;
     public Transfer FileTransfer;
+    private AdView mAdView;
 
     private static MainActivity _instance = null;
 
@@ -89,7 +92,9 @@ public class MainActivity extends AppCompatActivity implements Filenames.OnFragm
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
-
+        mAdView = (AdView) findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        mAdView.loadAd(adRequest);
         mUser = getIntent().getStringExtra(LOGIN_USER_NAME);
         mPass = getIntent().getStringExtra(LOGIN_USER_PASS);
         _instance = this;
@@ -146,6 +151,8 @@ public class MainActivity extends AppCompatActivity implements Filenames.OnFragm
     public void refreshLocalLists(){
 
         mViewPager.getAdapter().notifyDataSetChanged();
+        AdRequest adRequest = new AdRequest.Builder().build();
+        mAdView.loadAd(adRequest);
     }
 
     public void refreshRemoteLists(){

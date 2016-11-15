@@ -23,6 +23,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -32,6 +33,14 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
@@ -53,15 +62,9 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      * Id to identity READ_CONTACTS permission request.
      */
     private static final int REQUEST_READ_CONTACTS = 0;
+    private FirebaseAuth mAuth;
+    private FirebaseAuth.AuthStateListener mAuthListener;
 
-
-    /**
-     * A dummy authentication store containing known user names and passwords.
-     * TODO: remove after connecting to a real authentication system.
-     */
-    private static final String[] DUMMY_CREDENTIALS = new String[]{
-            "buradd@gmail.com:hello", "bar@example.com:world"
-    };
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
      */
@@ -72,12 +75,17 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     private EditText mPasswordView;
     private View mProgressView;
     private View mLoginFormView;
+    private AdView mAdView;
     String[] PERMISSIONS = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.INTERNET, Manifest.permission.BLUETOOTH, Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.READ_PHONE_STATE, Manifest.permission.ACCESS_NETWORK_STATE, Manifest.permission.WAKE_LOCK, Manifest.permission.RECORD_AUDIO, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+        mAuth = FirebaseAuth.getInstance();
+        mAdView = (AdView) findViewById(R.id.adViewLogin);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        mAdView.loadAd(adRequest);
         // Set up the login form.
         ActivityCompat.requestPermissions(this, PERMISSIONS, 1);
         mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
@@ -103,8 +111,107 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             }
         });
 
+        Button mEmailRegInButton = (Button) findViewById(R.id.email_reg_in_button);
+        mEmailRegInButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                attemptRegister();
+            }
+        });
+
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
+
+
+        mAuthListener = new FirebaseAuth.AuthStateListener() {
+            @Override
+            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                FirebaseUser user = firebaseAuth.getCurrentUser();
+                if (user != null) {
+                    // User is signed in
+                    Log.d("LoginAct", "onAuthStateChanged:signed_in:" + user.getUid());
+                } else {
+                    // User is signed out
+                    Log.d("LoginAct", "onAuthStateChanged:signed_out");
+                }
+                // ...
+            }
+        };
+    }
+
+    private void attemptRegister(){
+        showProgress(true);
+
+        // Reset errors.
+        mEmailView.setError(null);
+        mPasswordView.setError(null);
+
+        // Store values at the time of the login attempt.
+        String email = mEmailView.getText().toString();
+        String password = mPasswordView.getText().toString();
+
+        boolean cancel = false;
+        View focusView = null;
+
+        // Check for a valid password, if the user entered one.
+        if (!TextUtils.isEmpty(password) && !isPasswordValid(password)) {
+            mPasswordView.setError(getString(R.string.error_invalid_password));
+            focusView = mPasswordView;
+            cancel = true;
+        }
+
+        // Check for a valid email address.
+        if (TextUtils.isEmpty(email)) {
+            mEmailView.setError(getString(R.string.error_field_required));
+            focusView = mEmailView;
+            cancel = true;
+        } else if (!isEmailValid(email)) {
+            mEmailView.setError(getString(R.string.error_invalid_email));
+            focusView = mEmailView;
+            cancel = true;
+        }
+
+        if (cancel) {
+            // There was an error; don't attempt login and focus the first
+            // form field with an error.
+            focusView.requestFocus();
+        } else {
+            // Show a progress spinner, and kick off a background task to
+            // perform the user login attempt.
+            mAuth.createUserWithEmailAndPassword(email, password)
+                    .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                        @Override
+                        public void onComplete(@NonNull Task<AuthResult> task) {
+                            Log.d("LoginAct", "createUserWithEmail:onComplete:" + task.isSuccessful());
+
+                            // If sign in fails, display a message to the user. If sign in succeeds
+                            // the auth state listener will be notified and logic to handle the
+                            // signed in user can be handled in the listener.
+                            if (!task.isSuccessful()) {
+                             //   Toast.makeText(EmailPasswordActivity.this, "Authentication failed.",
+                              //          Toast.LENGTH_SHORT).show();
+                                showProgress(false);
+                                Snackbar.make(findViewById(android.R.id.content), "Failed to register, are you already registered?", Snackbar.LENGTH_INDEFINITE).setAction("SIGN IN", new OnClickListener() {
+                                    @Override
+                                    public void onClick(View view) {
+                                        attemptLogin();
+                                    }
+                                }).show();
+                            }else{
+                                showProgress(false);
+                                mAuth.getCurrentUser().sendEmailVerification();
+                                Snackbar.make(findViewById(android.R.id.content), "Account created. Please check your email and verify.", Snackbar.LENGTH_INDEFINITE).setAction("OKAY", new OnClickListener() {
+                                    @Override
+                                    public void onClick(View view) {
+                                        // nothing
+                                    }
+                                }).show();
+                            }
+
+                            // ...
+                        }
+                    });
+        }
     }
 
     private void populateAutoComplete() {
@@ -157,6 +264,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      * errors are presented and no actual login attempt is made.
      */
     private void attemptLogin() {
+
+        showProgress(true);
         if (mAuthTask != null) {
             return;
         }
@@ -166,8 +275,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         mPasswordView.setError(null);
 
         // Store values at the time of the login attempt.
-        String email = mEmailView.getText().toString();
-        String password = mPasswordView.getText().toString();
+        final String email = mEmailView.getText().toString();
+        final String password = mPasswordView.getText().toString();
 
         boolean cancel = false;
         View focusView = null;
@@ -197,20 +306,70 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         } else {
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
-            showProgress(true);
-            mAuthTask = new UserLoginTask(email, password);
-            mAuthTask.execute((Void) null);
+            mAuth.signInWithEmailAndPassword(email, password)
+                    .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                        @Override
+                        public void onComplete(@NonNull Task<AuthResult> task) {
+                            Log.d("LoginAct", "signInWithEmail:onComplete:" + task.isSuccessful());
+
+                            // If sign in fails, display a message to the user. If sign in succeeds
+                            // the auth state listener will be notified and logic to handle the
+                            // signed in user can be handled in the listener.
+
+                            if (!task.isSuccessful()) {
+                                Log.w("LoginAct", "signInWithEmail", task.getException());
+                                showProgress(false);
+                                Snackbar.make(findViewById(android.R.id.content), "Authentication failed. Check your username and/or password and try again.", Snackbar.LENGTH_LONG).show();
+                              //  Toast.makeText(EmailPasswordActivity.this, "Authentication failed.",
+                              //          Toast.LENGTH_SHORT).show();
+                            }else if(!mAuth.getCurrentUser().isEmailVerified()){
+                                showProgress(false);
+                                Snackbar.make(findViewById(android.R.id.content), "You have not yet verified your email. Please check your email and verify.", Snackbar.LENGTH_INDEFINITE).setAction("OKAY", new OnClickListener() {
+                                    @Override
+                                    public void onClick(View view) {
+                                        //nothing
+                                    }
+                                }).show();
+                            }
+
+                            else{
+
+                                mAuthTask = new UserLoginTask(email, password);
+                                mAuthTask.execute((Void) null);
+                            }
+
+                            // ...
+                        }
+                    });
+
+
+
+
         }
     }
 
     private boolean isEmailValid(String email) {
         //TODO: Replace this with your own logic
-        return true;
+        return email.contains("@");
     }
 
     private boolean isPasswordValid(String password) {
         //TODO: Replace this with your own logic
         return password.length() > 4;
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        mAuth.addAuthStateListener(mAuthListener);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (mAuthListener != null) {
+            mAuth.removeAuthStateListener(mAuthListener);
+        }
     }
 
     /**
@@ -316,6 +475,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             mEmail = email;
             mPassword = password;
         }
+        private final String userNamed = mAuth.getCurrentUser().getUid();
+
 
         @Override
         protected Boolean doInBackground(Void... params) {
@@ -325,7 +486,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                 // Simulate network access.
                 FTPClient aFtp = new FTPClient();
                 aFtp.connect(InetAddress.getByName("ftp.buradd.com"));
-                connected = aFtp.login(mEmail, mPassword);
+                connected = aFtp.login(userNamed, mPassword);
                 if(connected) {
                     aFtp.enterLocalPassiveMode();
                     aFtp.setFileType(FTP.BINARY_FILE_TYPE);
@@ -378,8 +539,15 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                 startActivity(intent);
                 finish();
             } else {
-                mPasswordView.setError(getString(R.string.error_incorrect_password));
-                mPasswordView.requestFocus();
+               Snackbar.make(findViewById(android.R.id.content), "Your account has not been fully set up yet. Please wait a few minutes and try again.", Snackbar.LENGTH_INDEFINITE).setAction("OKAY", new OnClickListener() {
+                   @Override
+                   public void onClick(View view) {
+                       //nothing
+                   }
+               }).show();
+
+                // mPasswordView.setError(getString(R.string.error_incorrect_password));
+               // mPasswordView.requestFocus();
             }
         }
 
