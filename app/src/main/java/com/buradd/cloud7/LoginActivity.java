@@ -7,6 +7,7 @@ import android.annotation.TargetApi;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Environment;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
@@ -53,6 +54,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static android.Manifest.permission.READ_CONTACTS;
+import static java.security.AccessController.getContext;
 
 /**
  * A login screen that offers login via email/password.
@@ -87,7 +89,11 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         setContentView(R.layout.activity_login);
         mAuth = FirebaseAuth.getInstance();
         mAdView = (AdView) findViewById(R.id.adViewLogin);
-        AdRequest adRequest = new AdRequest.Builder().build();
+        AdRequest adRequest = new AdRequest.Builder()
+                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
+                .addTestDevice("65afae2aa5f38fa4")
+                .build();
+
         mAdView.loadAd(adRequest);
         // Set up the login form.
         ActivityCompat.requestPermissions(this, PERMISSIONS, 1);

@@ -101,7 +101,10 @@ public class MainActivity extends AppCompatActivity implements Filenames.OnFragm
         setContentView(R.layout.activity_main);
         mAuth = FirebaseAuth.getInstance();
         mAdView = (AdView) findViewById(R.id.adView);
-        AdRequest adRequest = new AdRequest.Builder().build();
+        AdRequest adRequest = new AdRequest.Builder()
+                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
+                .addTestDevice("65afae2aa5f38fa4")
+                .build();
         mAdView.loadAd(adRequest);
         mUser = getIntent().getStringExtra(LOGIN_USER_NAME);
         mPass = getIntent().getStringExtra(LOGIN_USER_PASS);
