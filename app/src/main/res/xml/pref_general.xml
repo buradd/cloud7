@@ -19,14 +19,14 @@
         android:title="@string/pref_title_display_name" />
 -->
 
-    <Preference android:title="@string/pref_change_email">
+    <!--<Preference android:title="@string/pref_change_email">
 
     </Preference>
 
     <Preference android:title="@string/pref_change_password">
 
     </Preference>
-
+-->
 
     <!-- NOTE: Hide buttons to simplify the UI. Users can touch outside the dialog to
          dismiss it. -->

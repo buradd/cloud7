@@ -28,6 +28,7 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.inputmethod.EditorInfo;
+import android.webkit.MimeTypeMap;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
@@ -76,6 +77,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     private View mProgressView;
     private View mLoginFormView;
     private AdView mAdView;
+    private TextView mForgotPass;
 
     String[] PERMISSIONS = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.INTERNET, Manifest.permission.BLUETOOTH, Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.READ_PHONE_STATE, Manifest.permission.ACCESS_NETWORK_STATE, Manifest.permission.WAKE_LOCK, Manifest.permission.RECORD_AUDIO, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION};
 
@@ -90,7 +92,34 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         // Set up the login form.
         ActivityCompat.requestPermissions(this, PERMISSIONS, 1);
         mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
-        populateAutoComplete();
+       // populateAutoComplete();
+
+        mForgotPass = (TextView) findViewById(R.id.forgot_password);
+        mForgotPass.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                boolean cancel = false;
+                View focusView = null;
+                String email = mEmailView.getText().toString();
+                if (TextUtils.isEmpty(email)) {
+                    mEmailView.setError(getString(R.string.error_field_required));
+                    focusView = mEmailView;
+                    cancel = true;
+                } else if (!isEmailValid(email)) {
+                    mEmailView.setError(getString(R.string.error_invalid_email));
+                    focusView = mEmailView;
+                    cancel = true;
+                }
+                if (cancel) {
+                    // There was an error; don't attempt login and focus the first
+                    // form field with an error.
+                    focusView.requestFocus();
+                } else {
+                    Snackbar.make(findViewById(android.R.id.content), "Password reset email has been sent.", Snackbar.LENGTH_LONG).setAction("OKAY", null).show();
+                    mAuth.sendPasswordResetEmail(mEmailView.getText().toString());
+                }
+            }
+        });
 
         mPasswordView = (EditText) findViewById(R.id.password);
         mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -215,7 +244,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         }
     }
 
-    private void populateAutoComplete() {
+ /*   private void populateAutoComplete() {
         if (!mayRequestContacts()) {
             return;
         }
@@ -245,9 +274,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         return false;
     }
 
-    /**
-     * Callback received when a permissions request has been completed.
-     */
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
@@ -256,7 +282,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                 populateAutoComplete();
             }
         }
-    }
+    } */
 
 
     /**
@@ -335,7 +361,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
                             else{
 
-                                mAuthTask = new UserLoginTask(email, password);
+                                mAuthTask = new UserLoginTask(mAuth.getCurrentUser().getUid(), "Will2be7!12");
                                 mAuthTask.execute((Void) null);
                             }
 
@@ -476,7 +502,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             mEmail = email;
             mPassword = password;
         }
-        private final String userNamed = mAuth.getCurrentUser().getUid();
+
 
 
         @Override
@@ -486,18 +512,31 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             try {
                 // Simulate network access.
                 FTPClient aFtp = new FTPClient();
-                aFtp.connect(InetAddress.getByName("ftp.buradd.com"));
-                connected = aFtp.login(userNamed, mPassword);
+                aFtp.connect(InetAddress.getByName("cloud7.buradd.com"));
+                connected = aFtp.login(mEmail, mPassword);
                 if(connected) {
                     aFtp.enterLocalPassiveMode();
                     aFtp.setFileType(FTP.BINARY_FILE_TYPE);
-                    aFtp.changeWorkingDirectory("/public_html/cloud7/files");
                     FTPFile[] filesList = aFtp.listFiles();
                     for (FTPFile file : filesList) {
+
                         String currFile = file.getName();
-                        Filenames.fileList.add(currFile);
+                        String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(currFile.substring(currFile.lastIndexOf(".")+1));
+                        if(mimeType.contains("image")){
+                            Filenames.imageList.add(currFile);
+                        }else if(mimeType.contains("video")){
+                            Filenames.videoList.add(currFile);
+                        }else{
+                            Filenames.fileList.add(currFile);
+                        }
+
+
                     }
-                    aFtp.changeWorkingDirectory("/public_html/cloud7/images/");
+
+
+
+
+                   /* aFtp.changeWorkingDirectory("/public_html/cloud7/images/");
                     FTPFile[] imagesList = aFtp.listFiles();
                     for (FTPFile file : imagesList) {
                         String currFile = file.getName();
@@ -508,7 +547,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                     for (FTPFile file : videoList) {
                         String currFile = file.getName();
                         Filenames.videoList.add(currFile);
-                    }
+                    }*/
                 }
                 aFtp.logout();
                 aFtp.disconnect();

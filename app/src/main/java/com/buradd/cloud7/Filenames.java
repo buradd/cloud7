@@ -113,17 +113,7 @@ public class Filenames extends Fragment implements TransferTaskProgressListener 
                 FileTransfer = new Transfer(1);
                 FileTransfer.setDestinationPath(Environment.getExternalStorageDirectory() + "/Cloud7");
                 FileTransfer.setName(file.getName());
-                switch(mFragmentType){
-                    case 0:
-                        FileTransfer.setSourcePath("/public_html/cloud7/files");
-                        break;
-                    case 1:
-                        FileTransfer.setSourcePath("/public_html/cloud7/images");
-                        break;
-                    case 2:
-                        FileTransfer.setSourcePath("/public_html/cloud7/videos");
-                        break;
-                }
+                FileTransfer.setSourcePath("");
                 FileTransfer.setDirection(TransferDirection.DOWNLOAD);
                 TransferTask downLoad = new FTPSingleFileTransferTask(mainActivity, Filenames.this, Collections.singletonList(FileTransfer), getConnectionParams());
                 downLoad.execute();

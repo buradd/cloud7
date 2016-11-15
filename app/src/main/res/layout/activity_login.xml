@@ -20,6 +20,8 @@
         android:paddingBottom="20dp"
         android:layout_gravity="center"/>
 
+
+
     <ProgressBar
         android:id="@+id/login_progress"
         style="?android:attr/progressBarStyleLarge"
@@ -47,7 +49,14 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/desc_text"
+                android:layout_gravity="center"
+                android:textAlignment="center"
+                android:text="@string/desc_string"
+                android:paddingBottom="20dp"/>
 
             <android.support.design.widget.TextInputLayout
                 android:layout_width="match_parent"
@@ -82,6 +91,14 @@
 
             </android.support.design.widget.TextInputLayout>
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/forgot_password"
+                android:text="@string/forgot_password_tv"
+                android:layout_gravity="right"
+                android:clickable="true"/>
+
             <Button
                 android:id="@+id/email_sign_in_button"
                 style="?android:textAppearanceSmall"
@@ -101,6 +118,14 @@
                 android:text="@string/action_reg_in"
                 android:textStyle="bold"
                 android:backgroundTint="@color/colorPrimary"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/desc_text2"
+                android:layout_gravity="center"
+                android:textAlignment="center"
+                android:text="@string/desc_string2"
+                android:paddingTop="20dp"/>
 
 
 

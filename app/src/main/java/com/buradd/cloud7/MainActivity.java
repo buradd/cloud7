@@ -135,13 +135,7 @@ public class MainActivity extends AppCompatActivity implements Filenames.OnFragm
                         String filename = chosenDir.substring(chosenDir.lastIndexOf("/"));
                         String sourcepath = chosenDir.replaceAll(filename, "");
                         FileTransfer.setSourcePath(sourcepath);
-                        if(mimeType.contains("image")){
-                            FileTransfer.setDestinationPath("/public_html/cloud7/images");
-                        }else if(mimeType.contains("video")){
-                            FileTransfer.setDestinationPath("/public_html/cloud7/videos");
-                        }else{
-                            FileTransfer.setDestinationPath("/public_html/cloud7/files");
-                        }
+                        FileTransfer.setDestinationPath("");
                         FileTransfer.setName(file.getName());
                         FileTransfer.setDirection(TransferDirection.UPLOAD);
                         TransferTask upLoad = new FTPSingleFileTransferTask(MainActivity.this, MainActivity.this, Collections.singletonList(FileTransfer), getConnectionParams());
@@ -231,7 +225,8 @@ public class MainActivity extends AppCompatActivity implements Filenames.OnFragm
 
                 break;
             case R.id.change_password:
-
+                Snackbar.make(findViewById(android.R.id.content), "Password reset email has been sent.", Snackbar.LENGTH_LONG).setAction("OKAY", null).show();
+                mAuth.sendPasswordResetEmail(mAuth.getCurrentUser().getEmail());
                 break;
         }
 
