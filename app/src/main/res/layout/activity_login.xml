@@ -118,22 +118,12 @@
                 android:text="@string/action_reg_in"
                 android:textStyle="bold"
                 android:backgroundTint="@color/colorPrimary"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/desc_text2"
-                android:layout_gravity="center"
-                android:textAlignment="center"
-                android:text="@string/desc_string2"
-                android:paddingTop="20dp"/>
-
 
 
         </LinearLayout>
 
 
     </ScrollView>
-
 
     <RelativeLayout
         xmlns:ads="http://schemas.android.com/apk/res-auto"
@@ -152,4 +142,5 @@
         </com.google.android.gms.ads.AdView>
 
     </RelativeLayout>
+
 </LinearLayout>

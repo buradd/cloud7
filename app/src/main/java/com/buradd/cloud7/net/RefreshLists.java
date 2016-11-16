@@ -18,8 +18,8 @@ import java.net.InetAddress;
 
 public class RefreshLists extends AsyncTask<String, Void, Void> {
 
-    MainActivity mainActivity = MainActivity.getInstance();
 
+    MainActivity mainActivity = MainActivity.getInstance();
 
     @Override
     protected void onPostExecute(Void aVoid) {

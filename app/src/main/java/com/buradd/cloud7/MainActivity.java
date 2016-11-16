@@ -10,6 +10,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.view.ActionMode;
 import android.support.v7.widget.Toolbar;
 
 import android.support.v4.app.Fragment;
@@ -21,6 +22,7 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,6 +31,7 @@ import android.webkit.MimeTypeMap;
 import android.widget.TextView;
 
 import com.buradd.cloud7.net.ConnectionParams;
+import com.buradd.cloud7.net.FTPDelete;
 import com.buradd.cloud7.net.FTPSingleFileTransferTask;
 import com.buradd.cloud7.net.RefreshLists;
 import com.buradd.cloud7.net.Transfer;
@@ -47,6 +50,7 @@ import org.apache.commons.net.ftp.FTPFile;
 import java.io.File;
 import java.net.InetAddress;
 import java.util.Collections;
+import java.util.concurrent.ExecutionException;
 
 import static com.buradd.cloud7.Filenames.fileList;
 import static com.buradd.cloud7.Filenames.imageList;
@@ -62,6 +66,11 @@ public class MainActivity extends AppCompatActivity implements Filenames.OnFragm
     public Transfer FileTransfer;
     private AdView mAdView;
     private FirebaseAuth mAuth;
+    public TabLayout tabLayout;
+    public ActionMode mActionMode;
+    public Object mSelectedFile;
+    private Filenames fileNames = Filenames.getInstance();
+    public Toolbar toolbar;
     private FirebaseAuth.AuthStateListener mAuthListener;
 
 
@@ -79,6 +88,67 @@ public class MainActivity extends AppCompatActivity implements Filenames.OnFragm
         super.onDestroy();
     }
 
+    public ActionMode.Callback mActionModeCallback = new ActionMode.Callback() {
+        @Override
+        public boolean onCreateActionMode(ActionMode actionMode, Menu menu) {
+            MenuInflater inflater = actionMode.getMenuInflater();
+            inflater.inflate(R.menu.file_context_menu, menu);
+            getWindow().setStatusBarColor(getResources().getColor(R.color.colorPrimaryDark));
+            return true;
+        }
+
+        @Override
+        public boolean onPrepareActionMode(ActionMode actionMode, Menu menu) {
+            return false;
+        }
+
+        @Override
+        public boolean onActionItemClicked(ActionMode actionMode, MenuItem menuItem) {
+
+            switch(menuItem.getItemId()){
+                case R.id.action_delete:
+                    boolean deleted = false;
+                    FTPDelete ftpDel = new FTPDelete();
+                    try {
+                         deleted = ftpDel.execute("cloud7.buradd.com", mUser, mPass, mSelectedFile.toString()).get();
+                    }catch(Exception e){
+                        e.printStackTrace();
+                    }
+                    if(deleted){
+                        Snackbar.make(findViewById(android.R.id.content), "File deleted: \n" + mSelectedFile.toString(), Snackbar.LENGTH_LONG).setAction("OKAY", null).show();
+                        refreshLocalLists();
+                    }else{
+                        Snackbar.make(findViewById(android.R.id.content), "Unable to delete file.", Snackbar.LENGTH_LONG).setAction("OKAY", null).show();
+                    }
+                    mSelectedFile = null;
+                    actionMode.finish();
+                    return true;
+                case R.id.action_rename:
+                    Snackbar.make(findViewById(android.R.id.content), "File rename feature coming soon.", Snackbar.LENGTH_LONG).setAction("OKAY", null).show();
+                    mSelectedFile = null;
+                    actionMode.finish();
+                    return true;
+
+            }
+            return false;
+        }
+
+        @Override
+        public void onDestroyActionMode(ActionMode actionMode) {
+
+         //   fileNames.theListView.clearChoices();
+            mActionMode = null;
+            mSectionsPagerAdapter.notifyDataSetChanged();
+            if(mSelectedFile != null)
+            mSelectedFile = null;
+
+
+        }
+    };
+
+
+
+
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
      * fragments for each of the sections. We use a
@@ -87,7 +157,7 @@ public class MainActivity extends AppCompatActivity implements Filenames.OnFragm
      * may be best to switch to a
      * {@link android.support.v4.app.FragmentStatePagerAdapter}.
      */
-    private SectionsPagerAdapter mSectionsPagerAdapter;
+    public SectionsPagerAdapter mSectionsPagerAdapter;
 
     /**
      * The {@link ViewPager} that will host the section contents.
@@ -109,7 +179,7 @@ public class MainActivity extends AppCompatActivity implements Filenames.OnFragm
         mUser = getIntent().getStringExtra(LOGIN_USER_NAME);
         mPass = getIntent().getStringExtra(LOGIN_USER_PASS);
         _instance = this;
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
@@ -120,7 +190,7 @@ public class MainActivity extends AppCompatActivity implements Filenames.OnFragm
         mViewPager.setAdapter(mSectionsPagerAdapter);
         mViewPager.setOffscreenPageLimit(3);
 
-        TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
+        tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(mViewPager);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);

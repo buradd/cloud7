@@ -7,7 +7,11 @@ import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
+import android.support.v7.view.ActionMode;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -45,10 +49,12 @@ public class Filenames extends Fragment implements TransferTaskProgressListener 
     public static ArrayList<String> imageList = new ArrayList<>();
     public static ArrayList<String> videoList = new ArrayList<>();
     private Transfer FileTransfer;
+    private static Filenames _instance = null;
+
 
     private int mFragmentType;
 
-    private ListView theListView;
+    public ListView theListView;
 
     // TODO: Rename and change types of parameters
     private String mUser;
@@ -60,6 +66,10 @@ public class Filenames extends Fragment implements TransferTaskProgressListener 
 
     public Filenames() {
         // Required empty public constructor
+    }
+
+    public static Filenames getInstance(){
+        return _instance;
     }
 
     private static final String ARG_USER_NAME = "user_name";
@@ -84,6 +94,8 @@ public class Filenames extends Fragment implements TransferTaskProgressListener 
         return fragment;
     }
 
+
+
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -105,6 +117,19 @@ public class Filenames extends Fragment implements TransferTaskProgressListener 
                 theListView.setAdapter(adaptervideos);
                 break;
         }
+        theListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> adapterView, View view, int i, long l) {
+                if(mainActivity.mActionMode != null){
+                    return false;
+                }
+                mainActivity.mSelectedFile = theListView.getAdapter().getItem(i);
+                mainActivity.mActionMode = mainActivity.startSupportActionMode(mainActivity.mActionModeCallback);
+                theListView.setItemChecked(i, true);
+                return true;
+            }
+        });
+        theListView.setLongClickable(true);
         theListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
@@ -138,6 +163,7 @@ public class Filenames extends Fragment implements TransferTaskProgressListener 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        _instance = this;
         if (getArguments() != null) {
             mUser = getArguments().getString(ARG_USER_NAME);
             mPass = getArguments().getString(ARG_USER_PASS);
