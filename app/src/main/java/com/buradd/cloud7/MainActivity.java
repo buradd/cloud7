@@ -173,7 +173,7 @@ public class MainActivity extends AppCompatActivity implements Filenames.OnFragm
         mAdView = (AdView) findViewById(R.id.adView);
         AdRequest adRequest = new AdRequest.Builder()
                 .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
-                .addTestDevice("65afae2aa5f38fa4")
+                .addTestDevice("DEB2DE27DD450C0617C61831732B928D")
                 .build();
         mAdView.loadAd(adRequest);
         mUser = getIntent().getStringExtra(LOGIN_USER_NAME);

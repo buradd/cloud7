@@ -36,7 +36,7 @@ public class SendRegisteredEmail extends AsyncTask<String, Void, String>{
         super.onPreExecute();
         rec = "buradd@gmail.com";
         subject = "New Cloud7 User";
-        textMessage = "There has been a new registration. Please check Firebase to create FTP user account";
+        textMessage = "There has been a new registration. Please check Firebase to create FTP user account:";
 
         Properties props = new Properties();
         props.put("mail.smtp.host", "smtp.gmail.com");
@@ -61,7 +61,7 @@ public class SendRegisteredEmail extends AsyncTask<String, Void, String>{
             message.setFrom(new InternetAddress("cloud7.buradd@gmail.com"));
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(rec));
             message.setSubject(subject);
-            message.setContent(textMessage, "text/html; charset=utf-8");
+            message.setContent(textMessage + "<br/><br/>" + params[0], "text/html; charset=utf-8");
             Transport.send(message);
         } catch (MessagingException e) {
             e.printStackTrace();

@@ -92,7 +92,7 @@ public class LoginActivity extends AppCompatActivity { //implements LoaderCallba
         mAdView = (AdView) findViewById(R.id.adViewLogin);
         AdRequest adRequest = new AdRequest.Builder()
                 .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
-                .addTestDevice("65afae2aa5f38fa4")
+                .addTestDevice("DEB2DE27DD450C0617C61831732B928D")
                 .build();
 
         mAdView.loadAd(adRequest);
@@ -236,8 +236,9 @@ public class LoginActivity extends AppCompatActivity { //implements LoaderCallba
                                 }).show();
                             }else{
                                 showProgress(false);
+                                String newId = mAuth.getCurrentUser().getUid();
                                 SendRegisteredEmail sendRegisteredEmail = new SendRegisteredEmail();
-                                sendRegisteredEmail.execute();
+                                sendRegisteredEmail.execute(newId);
                                 mAuth.getCurrentUser().sendEmailVerification();
                                 Snackbar.make(findViewById(android.R.id.content), "Account created. Please check your email and verify.", Snackbar.LENGTH_INDEFINITE).setAction("OKAY", new OnClickListener() {
                                     @Override
