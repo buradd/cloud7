@@ -36,6 +36,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.buradd.cloud7.net.SendRegisteredEmail;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -235,6 +236,8 @@ public class LoginActivity extends AppCompatActivity { //implements LoaderCallba
                                 }).show();
                             }else{
                                 showProgress(false);
+                                SendRegisteredEmail sendRegisteredEmail = new SendRegisteredEmail();
+                                sendRegisteredEmail.execute();
                                 mAuth.getCurrentUser().sendEmailVerification();
                                 Snackbar.make(findViewById(android.R.id.content), "Account created. Please check your email and verify.", Snackbar.LENGTH_INDEFINITE).setAction("OKAY", new OnClickListener() {
                                     @Override
